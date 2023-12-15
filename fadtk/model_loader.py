@@ -4,6 +4,7 @@ import math
 from typing import Literal
 import numpy as np
 import soundfile
+import os
 
 import torch
 import librosa
@@ -13,6 +14,7 @@ from hypy_utils.downloader import download_file
 import torch.nn.functional as F
 import importlib.util
 
+from . import panns
 
 log = logging.getLogger(__name__)
 
@@ -78,6 +80,65 @@ class VGGishModel(ModelLoader):
 
     def _get_embedding(self, audio: np.ndarray) -> np.ndarray:
         return self.model.forward(audio, self.sr)
+    
+
+class PANNsModel(ModelLoader):
+    """
+    Kong, Qiuqiang, et al., "Panns: Large-scale pretrained audio neural networks for audio pattern recognition.",
+    IEEE/ACM Transactions on Audio, Speech, and Language Processing 28 (2020): 2880-2894.
+    """
+    def __init__(self, variant: Literal['32k', '16k'] = '32k'):
+        super().__init__('panns' if variant == '32k' else f"panns-{variant}", 2048, 
+                         sr=32000 if variant == '32k' else 16000)
+        self.variant = variant
+
+    def load_model(self):
+        current_file_dir = os.path.dirname(os.path.realpath(__file__))
+        ckpt_dir = os.path.join(current_file_dir, "panns/ckpt")
+        if not os.path.exists(ckpt_dir):
+            print("Download pretrained checkpoints of Cnn14.")
+            os.makedirs(ckpt_dir, exist_ok=True)
+            os.system(
+                f"wget -P {ckpt_dir} %s"
+                % ("https://zenodo.org/record/3576403/files/Cnn14_mAP%3D0.431.pth")
+            )
+            os.system(
+                f"wget -P {ckpt_dir} %s"
+                % ("https://zenodo.org/record/3987831/files/Cnn14_16k_mAP%3D0.438.pth")
+            )
+        
+        features_list = ["2048", "logits"]
+        if self.variant == '16k':
+            self.model = panns.Cnn14(
+                features_list=features_list,
+                sample_rate=16000,
+                window_size=512,
+                hop_size=160,
+                mel_bins=64,
+                fmin=50,
+                fmax=8000,
+                classes_num=527,
+            )
+        elif self.variant == '32k':
+            self.model = panns.Cnn14(
+                features_list=features_list,
+                sample_rate=32000,
+                window_size=1024,
+                hop_size=320,
+                mel_bins=64,
+                fmin=50,
+                fmax=14000,
+                classes_num=527,
+            )
+        self.model.eval()
+        self.model.to(self.device)
+
+    def _get_embedding(self, audio: np.ndarray) -> np.ndarray:
+        audio = torch.from_numpy(audio).float().to(self.device)
+        if len(audio.shape) == 1:
+            audio = audio.unsqueeze(0)
+        emb = self.model.forward(audio)["2048"]
+        return emb
         
 
 class EncodecEmbModel(ModelLoader):
@@ -620,6 +681,7 @@ def get_all_models() -> list[ModelLoader]:
         CLAPModel('2023'),
         CLAPLaionModel('audio'), CLAPLaionModel('music'),
         VGGishModel(), 
+        PANNsModel('32k'), PANNsModel('16k'),
         *(MERTModel(layer=v) for v in range(1, 13)),
         EncodecEmbModel('24k'), EncodecEmbModel('48k'), 
         # DACModel(),

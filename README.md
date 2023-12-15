@@ -20,6 +20,7 @@ You can listen to audio samples of per-song FAD outliers on the online demo here
 | [Encodec](https://github.com/facebookresearch/encodec) | `encodec-emb` | State-of-the-art deep learning based audio codec | Facebook/Meta Research |
 | [MERT](https://huggingface.co/m-a-p/MERT-v1-95M) | `MERT-v1-95M-{layer}` | Acoustic Music Understanding Model with Large-Scale Self-supervised Training | m-a-p |
 | [VGGish](https://github.com/tensorflow/models/blob/master/research/audioset/vggish/README.md) | `vggish` | Audio feature classification embedding | Google |
+| [PANNs](https://github.com/qiuqiangkong/audioset_tagging_cnn/README.md) | `panns` | PANNs: Large-Scale Pretrained Audio Neural Networks for Audio Pattern Recognition | Kong, Qiuqiang, et al. |
 | [DAC](https://github.com/descriptinc/descript-audio-codec) | `dac-44kHz` | High-Fidelity Audio Compression with Improved RVQGAN | Descript |
 | [CDPAM](https://github.com/pranaymanocha/PerceptualAudio) | `cdpam-{acoustic/content}` | Contrastive learning-based Deep Perceptual Audio Metric | Pranay Manocha et al. |
 | [Wav2vec 2.0](https://github.com/facebookresearch/fairseq/blob/main/examples/wav2vec/README.md) | `w2v2-{base/large}` | Wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations | Facebook/Meta Research |
@@ -189,6 +190,7 @@ Please also cite the FMA (Free Music Archive) dataset if you used FMA-Pop as you
 * WavLM: [microsoft/WavLM](https://github.com/microsoft/unilm/tree/master/wavlm)
 * Whisper: [OpenAI/Whisper](https://github.com/openai/whisper)
 * VGGish in PyTorch: [harritaylor/torchvggish](https://github.com/harritaylor/torchvggish)
+* PANNs: [qiuqiangkong/audioset_tagging_cnn](https://github.com/qiuqiangkong/audioset_tagging_cnn/)
 * Free Music Archive: [mdeff/fma](https://github.com/mdeff/fma)
 * Frechet Inception Distance implementation: [mseitzer/pytorch-fid](https://github.com/mseitzer/pytorch-fid)
 * Frechet Audio Distance paper: [arxiv/1812.08466](https://arxiv.org/abs/1812.08466)
