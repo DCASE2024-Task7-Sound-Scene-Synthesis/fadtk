@@ -27,33 +27,6 @@ def init_bn(bn):
     bn.bias.data.fill_(0.0)
     bn.weight.data.fill_(1.0)
 
-# TODO: use or not?
-# def frame(data, window_length, hop_length):
-#   """brought from https://github.com/tensorflow/models/blob/master/research/audioset/vggish/mel_features.py
-#   Convert array into a sequence of successive possibly overlapping frames.
-
-#   An n-dimensional array of shape (num_samples, ...) is converted into an
-#   (n+1)-D array of shape (num_frames, window_length, ...), where each frame
-#   starts hop_length points after the preceding one.
-
-#   This is accomplished using stride_tricks, so the original data is not
-#   copied.  However, there is no zero-padding, so any incomplete frames at the
-#   end are not included.
-
-#   Args:
-#     data: np.array of dimension N >= 1.
-#     window_length: Number of samples in each frame.
-#     hop_length: Advance (in samples) between each window.
-
-#   Returns:
-#     (N+1)-D np.array with as many rows as there are complete frames that can be
-#     extracted.
-#   """
-#   num_samples = data.shape[0]
-#   num_frames = 1 + int(np.floor((num_samples - window_length) / hop_length))
-#   shape = (num_frames, window_length) + data.shape[1:]
-#   strides = (data.strides[0] * hop_length,) + data.strides
-#   return np.lib.stride_tricks.as_strided(data, shape=shape, strides=strides)
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -261,19 +234,7 @@ class Cnn14(nn.Module):
         self.fc1 = nn.Linear(2048, 2048, bias=True)
         self.fc_audioset = nn.Linear(2048, classes_num, bias=True)
 
-        # if not os.path.exists("ckpt/Cnn14_mAP=0.431.pth"):
-        #     print("Download pretrained checkpoints of Cnn14.")
-        #     os.makedirs("ckpt", exist_ok=True)
-        #     os.system(
-        #         "wget -P ckpt/ %s"
-        #         % ("https://zenodo.org/record/3576403/files/Cnn14_mAP%3D0.431.pth")
-        #     )
-        #     os.system(
-        #         "wget -P ckpt/ %s"
-        #         % ("https://zenodo.org/record/3987831/files/Cnn14_16k_mAP%3D0.438.pth")
-        #     )
-
-        # self.init_weight()
+        self.init_weight()
         current_file_dir = os.path.dirname(os.path.realpath(__file__))
         if sample_rate == 16000:
             state_dict = torch.load(f"{current_file_dir}/ckpt/Cnn14_16k_mAP=0.438.pth")
