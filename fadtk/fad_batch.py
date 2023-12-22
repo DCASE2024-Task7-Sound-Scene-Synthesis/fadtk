@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import Callable, Union
 import numpy as np
-
+import shutil
 import torch
 
 from .fad import log, FrechetAudioDistance
@@ -22,7 +22,7 @@ def _cache_embedding_batch(args):
         fad.cache_embedding_file(f)
 
 
-def cache_embedding_files(files: Union[list[Path], str, Path], ml: ModelLoader, workers: int = 8, **kwargs):
+def cache_embedding_files(files: Union[list[Path], str, Path], ml: ModelLoader, workers: int = 8, force_emb_calc=False, **kwargs):
     """
     Get embeddings for all audio files in a directory.
 
@@ -31,8 +31,17 @@ def cache_embedding_files(files: Union[list[Path], str, Path], ml: ModelLoader, 
     if isinstance(files, (str, Path)):
         files = list(Path(files).glob('*.*'))
 
+    if force_emb_calc:
+        emb_path = files[0].parent / "embeddings" / ml.name
+        if os.path.exists(emb_path):
+            # Remove the folder and its contents
+            shutil.rmtree(emb_path)
+            print(f"The folder '{emb_path}' has been successfully removed.")
+        
+
     # Filter out files that already have embeddings
     files = [f for f in files if not get_cache_embedding_path(ml.name, f).exists()]
+
     if len(files) == 0:
         log.info("All files already have embeddings, skipping.")
         return
