@@ -2887,6 +2887,9 @@ class Wavegram_Logmel_Cnn14(nn.Module):
         self.fc_audioset = nn.Linear(2048, classes_num, bias=True)
 
         self.init_weight()
+        current_file_dir = os.path.dirname(os.path.realpath(__file__))
+        state_dict = torch.load(f"{current_file_dir}/ckpt/Wavegram_Logmel_Cnn14_mAP=0.439.pth")
+        self.load_state_dict(state_dict["model"])
 
     def init_weight(self):
         init_layer(self.pre_conv0)

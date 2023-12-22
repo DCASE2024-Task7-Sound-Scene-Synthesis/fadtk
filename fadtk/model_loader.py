@@ -5,7 +5,6 @@ from typing import Literal
 import numpy as np
 import soundfile
 import os
-
 import torch
 import librosa
 from torch import nn
@@ -13,17 +12,18 @@ from pathlib import Path
 from hypy_utils.downloader import download_file
 import torch.nn.functional as F
 import importlib.util
+from .utils import chunk_np_array
 
 from . import panns
 
 log = logging.getLogger(__name__)
 
-
 class ModelLoader(ABC):
     """
     Abstract class for loading a model and getting embeddings from it. The model should be loaded in the `load_model` method.
     """
-    def __init__(self, name: str, num_features: int, sr: int):
+    def __init__(self, name: str, num_features: int, sr: int, audio_len : int):
+        self.audio_len = audio_len
         self.model = None
         self.sr = sr
         self.num_features = num_features
@@ -56,7 +56,12 @@ class ModelLoader(ABC):
     def load_wav(self, wav_file: Path):
         wav_data, _ = soundfile.read(wav_file, dtype='int16')
         wav_data = wav_data / 32768.0  # Convert to [-1.0, +1.0]
-
+        if self.audio_len is not None:
+            if wav_data.shape[0] < self.sr*4:
+                padding_size = self.sr*4 - len(wav_data)
+                wav_data = np.pad(wav_data, (0, padding_size), 'constant', constant_values=(0, 0))
+            elif wav_data.shape[0] > self.sr*4:
+                wav_data = wav_data[:self.sr*4]
         return wav_data
 
 
@@ -64,8 +69,8 @@ class VGGishModel(ModelLoader):
     """
     S. Hershey et al., "CNN Architectures for Large-Scale Audio Classification", ICASSP 2017
     """
-    def __init__(self, use_pca=False, use_activation=False):
-        super().__init__("vggish", 128, 16000)
+    def __init__(self, use_pca=False, use_activation=False, audio_len=None):
+        super().__init__("vggish", 128, 16000, audio_len)
         self.use_pca = use_pca
         self.use_activation = use_activation
 
@@ -86,10 +91,14 @@ class PANNsModel(ModelLoader):
     """
     Kong, Qiuqiang, et al., "Panns: Large-scale pretrained audio neural networks for audio pattern recognition.",
     IEEE/ACM Transactions on Audio, Speech, and Language Processing 28 (2020): 2880-2894.
+
+    Specify the model to use (cnn14-32k, cnn14-16k, wavegram-logmel).
+    You can also specify wether to send the full provided audio or 1-s chunks of audio (cnn14-32k-1s). This was shown 
+    to have a very low impact on performances.
     """
-    def __init__(self, variant: Literal['32k', '16k'] = '32k'):
-        super().__init__('panns' if variant == '32k' else f"panns-{variant}", 2048, 
-                         sr=32000 if variant == '32k' else 16000)
+    def __init__(self, variant: Literal['cnn14-32k', 'cnn14-32k-1s', 'cnn14-16k', 'wavegram-logmel'], audio_len=None):
+        super().__init__(f"panns-{variant}", 2048, 
+                         sr=16000 if variant == 'cnn14-16k' else 16000, audio_len=audio_len)
         self.variant = variant
 
     def load_model(self):
@@ -106,9 +115,12 @@ class PANNsModel(ModelLoader):
                 f"wget -P {ckpt_dir} %s"
                 % ("https://zenodo.org/record/3987831/files/Cnn14_16k_mAP%3D0.438.pth")
             )
-        
+            os.system(
+                f"wget -P {ckpt_dir} %s"
+                % ("https://zenodo.org/records/3987831/files/Wavegram_Logmel_Cnn14_mAP%3D0.439.pth")
+            )
         features_list = ["2048", "logits"]
-        if self.variant == '16k':
+        if self.variant == 'cnn14-16k':
             self.model = panns.Cnn14(
                 features_list=features_list,
                 sample_rate=16000,
@@ -119,9 +131,19 @@ class PANNsModel(ModelLoader):
                 fmax=8000,
                 classes_num=527,
             )
-        elif self.variant == '32k':
+        elif self.variant == 'cnn14-32k':
             self.model = panns.Cnn14(
                 features_list=features_list,
+                sample_rate=32000,
+                window_size=1024,
+                hop_size=320,
+                mel_bins=64,
+                fmin=50,
+                fmax=14000,
+                classes_num=527,
+            )
+        elif self.variant == 'wavegram-logmel':
+            self.model = panns.Wavegram_Logmel_Cnn14(
                 sample_rate=32000,
                 window_size=1024,
                 hop_size=320,
@@ -134,22 +156,26 @@ class PANNsModel(ModelLoader):
         self.model.to(self.device)
 
     def _get_embedding(self, audio: np.ndarray) -> np.ndarray:
+        if '-1s' in self.variant:
+            audio = chunk_np_array(audio, self.sr)
         audio = torch.from_numpy(audio).float().to(self.device)
         if len(audio.shape) == 1:
             audio = audio.unsqueeze(0)
-        emb = self.model.forward(audio)["2048"]
+        if 'cnn14' in self.variant:
+            emb = self.model.forward(audio)["2048"]
+        else:
+            emb = self.model.forward(audio)["embedding"]
         return emb
-        
-
+    
 class EncodecEmbModel(ModelLoader):
     """
     Encodec model from https://github.com/facebookresearch/encodec
 
     Thiss version uses the embedding outputs (continuous values of 128 features).
     """
-    def __init__(self, variant: Literal['48k', '24k'] = '24k'):
+    def __init__(self, variant: Literal['48k', '24k'] = '24k', audio_len=None):
         super().__init__('encodec-emb' if variant == '24k' else f"encodec-emb-{variant}", 128,
-                         sr=24000 if variant == '24k' else 48000)
+                         sr=24000 if variant == '24k' else 48000, audio_len=audio_len)
         self.variant = variant
 
     def load_model(self):
@@ -225,8 +251,8 @@ class DACModel(ModelLoader):
 
     pip install descript-audio-codec
     """
-    def __init__(self):
-        super().__init__("dac-44kHz", 1024, 44100)
+    def __init__(self, audio_len=None):
+        super().__init__("dac-44kHz", 1024, 44100, audio_len=audio_len)
 
     def load_model(self):
         from dac.utils import load_model
@@ -290,8 +316,8 @@ class MERTModel(ModelLoader):
 
     Please specify the layer to use (1-12).
     """
-    def __init__(self, size='v1-95M', layer=12, limit_minutes=6):
-        super().__init__(f"MERT-{size}" + ("" if layer == 12 else f"-{layer}"), 768, 24000)
+    def __init__(self, size='v1-95M', layer=12, limit_minutes=6, audio_len=None):
+        super().__init__(f"MERT-{size}" + ("" if layer == 12 else f"-{layer}"), 768, 24000, audio_len=audio_len)
         self.huggingface_id = f"m-a-p/MERT-{size}"
         self.layer = layer
         self.limit = limit_minutes * 60 * self.sr
@@ -325,8 +351,8 @@ class CLAPLaionModel(ModelLoader):
     CLAP model from https://github.com/LAION-AI/CLAP
     """
     
-    def __init__(self, type: Literal['audio', 'music']):
-        super().__init__(f"clap-laion-{type}", 512, 48000)
+    def __init__(self, type: Literal['audio', 'music'], audio_len=None):
+        super().__init__(f"clap-laion-{type}", 512, 48000, audio_len=audio_len)
         self.type = type
 
         if type == 'audio':
@@ -425,8 +451,8 @@ class CdpamModel(ModelLoader):
     """
     CDPAM model from https://github.com/pranaymanocha/PerceptualAudio/tree/master/cdpam
     """
-    def __init__(self, mode: Literal['acoustic', 'content']) -> None:
-        super().__init__(f"cdpam-{mode}", 512, 22050)
+    def __init__(self, mode: Literal['acoustic', 'content'], audio_len=None) -> None:
+        super().__init__(f"cdpam-{mode}", 512, 22050, audio_len=audio_len)
         self.mode = mode
         assert mode in ['acoustic', 'content'], "Mode must be 'acoustic' or 'content'"
 
@@ -467,8 +493,8 @@ class CLAPModel(ModelLoader):
     """
     CLAP model from https://github.com/microsoft/CLAP
     """
-    def __init__(self, type: Literal['2023']):
-        super().__init__(f"clap-{type}", 1024, 44100)
+    def __init__(self, type: Literal['2023'], audio_len=None):
+        super().__init__(f"clap-{type}", 1024, 44100, audio_len=audio_len)
         self.type = type
 
         if type == '2023':
@@ -531,11 +557,11 @@ class W2V2Model(ModelLoader):
 
     Please specify the size ('base' or 'large') and the layer to use (1-12 for 'base' or 1-24 for 'large').
     """
-    def __init__(self, size: Literal['base', 'large'], layer: Literal['12', '24'], limit_minutes=6):
+    def __init__(self, size: Literal['base', 'large'], layer: Literal['12', '24'], limit_minutes=6, audio_len=None):
         model_dim = 768 if size == 'base' else 1024
         model_identifier = f"w2v2-{size}" + ("" if (layer == 12 and size == 'base') or (layer == 24 and size == 'large') else f"-{layer}")
 
-        super().__init__(model_identifier, model_dim, 16000)
+        super().__init__(model_identifier, model_dim, 16000, audio_len=audio_len)
         self.huggingface_id = f"facebook/wav2vec2-{size}-960h"
         self.layer = layer
         self.limit = limit_minutes * 60 * self.sr
@@ -568,11 +594,11 @@ class HuBERTModel(ModelLoader):
 
     Please specify the size ('base' or 'large') and the layer to use (1-12 for 'base' or 1-24 for 'large').
     """
-    def __init__(self, size: Literal['base', 'large'], layer: Literal['12', '24'], limit_minutes=6):
+    def __init__(self, size: Literal['base', 'large'], layer: Literal['12', '24'], limit_minutes=6, audio_len=None):
         model_dim = 768 if size == 'base' else 1024
         model_identifier = f"hubert-{size}" + ("" if (layer == 12 and size == 'base') or (layer == 24 and size == 'large') else f"-{layer}")
 
-        super().__init__(model_identifier, model_dim, 16000)
+        super().__init__(model_identifier, model_dim, 16000, audio_len=audio_len)
         self.huggingface_id = f"facebook/hubert-{size}-ls960"
         self.layer = layer
         self.limit = limit_minutes * 60 * self.sr
@@ -605,11 +631,11 @@ class WavLMModel(ModelLoader):
 
     Please specify the model size ('base', 'base-plus', or 'large') and the layer to use (1-12 for 'base' or 'base-plus' and 1-24 for 'large').
     """
-    def __init__(self, size: Literal['base', 'base-plus', 'large'], layer: Literal['12', '24'], limit_minutes=6):
+    def __init__(self, size: Literal['base', 'base-plus', 'large'], layer: Literal['12', '24'], limit_minutes=6, audio_len=None):
         model_dim = 768 if size in ['base', 'base-plus'] else 1024
         model_identifier = f"wavlm-{size}" + ("" if (layer == 12 and size in ['base', 'base-plus']) or (layer == 24 and size == 'large') else f"-{layer}")
 
-        super().__init__(model_identifier, model_dim, 16000)
+        super().__init__(model_identifier, model_dim, 16000, audio_len=audio_len)
         self.huggingface_id = f"patrickvonplaten/wavlm-libri-clean-100h-{size}"
         self.layer = layer
         self.limit = limit_minutes * 60 * self.sr
@@ -642,7 +668,7 @@ class WhisperModel(ModelLoader):
     
     Please specify the model size ('tiny', 'base', 'small', 'medium', or 'large').
     """
-    def __init__(self, size: Literal['tiny', 'base', 'small', 'medium', 'large']):
+    def __init__(self, size: Literal['tiny', 'base', 'small', 'medium', 'large'], audio_len=None):
         dimensions = {
             'tiny': 384,
             'base': 512,
@@ -653,7 +679,7 @@ class WhisperModel(ModelLoader):
         model_dim = dimensions.get(size)
         model_identifier = f"whisper-{size}"
 
-        super().__init__(model_identifier, model_dim, 16000)
+        super().__init__(model_identifier, model_dim, 16000, audio_len=audio_len)
         self.huggingface_id = f"openai/whisper-{size}"
         
     def load_model(self):
@@ -674,28 +700,28 @@ class WhisperModel(ModelLoader):
 
         return out
 
-
-
-def get_all_models() -> list[ModelLoader]:
+def get_all_models(audio_len=None) -> list[ModelLoader]:
     ms = [
-        CLAPModel('2023'),
-        CLAPLaionModel('audio'), CLAPLaionModel('music'),
-        VGGishModel(), 
-        PANNsModel('32k'), PANNsModel('16k'),
-        *(MERTModel(layer=v) for v in range(1, 13)),
-        EncodecEmbModel('24k'), EncodecEmbModel('48k'), 
-        # DACModel(),
-        # CdpamModel('acoustic'), CdpamModel('content'),
-        *(W2V2Model('base', layer=v) for v in range(1, 13)),
-        *(W2V2Model('large', layer=v) for v in range(1, 25)),
-        *(HuBERTModel('base', layer=v) for v in range(1, 13)),
-        *(HuBERTModel('large', layer=v) for v in range(1, 25)),
-        *(WavLMModel('base', layer=v) for v in range(1, 13)),
-        *(WavLMModel('base-plus', layer=v) for v in range(1, 13)),
-        *(WavLMModel('large', layer=v) for v in range(1, 25)),
-        WhisperModel('tiny'), WhisperModel('small'),
-        WhisperModel('base'), WhisperModel('medium'),
-        WhisperModel('large'),
+        CLAPModel('2023', audio_len=audio_len),
+        CLAPLaionModel('audio', audio_len=audio_len), CLAPLaionModel('music', audio_len=audio_len),
+        VGGishModel(audio_len=audio_len), 
+        PANNsModel('cnn14-32k',audio_len=audio_len), PANNsModel('cnn14-16k',audio_len=audio_len),
+        PANNsModel('wavegram-logmel',audio_len=audio_len),
+        # PANNs1sModel('32k',audio_len=audio_len), PANNs1sModel('16k',audio_len=audio_len),
+        *(MERTModel(layer=v, audio_len=audio_len) for v in range(1, 13)),
+        EncodecEmbModel('24k', audio_len=audio_len), EncodecEmbModel('48k', audio_len=audio_len), 
+        DACModel(audio_len=audio_len),
+        CdpamModel('acoustic', audio_len=audio_len), CdpamModel('content', audio_len=audio_len),
+        *(W2V2Model('base', layer=v, audio_len=audio_len) for v in range(1, 13)),
+        *(W2V2Model('large', layer=v, audio_len=audio_len) for v in range(1, 25)),
+        *(HuBERTModel('base', layer=v, audio_len=audio_len) for v in range(1, 13)),
+        *(HuBERTModel('large', layer=v, audio_len=audio_len) for v in range(1, 25)),
+        *(WavLMModel('base', layer=v, audio_len=audio_len) for v in range(1, 13)),
+        *(WavLMModel('base-plus', layer=v, audio_len=audio_len) for v in range(1, 13)),
+        *(WavLMModel('large', layer=v, audio_len=audio_len) for v in range(1, 25)),
+        WhisperModel('tiny', audio_len=audio_len), WhisperModel('small', audio_len=audio_len),
+        WhisperModel('base', audio_len=audio_len), WhisperModel('medium', audio_len=audio_len),
+        WhisperModel('large', audio_len=audio_len),
     ]
     if importlib.util.find_spec("dac") is not None:
         ms.append(DACModel())
