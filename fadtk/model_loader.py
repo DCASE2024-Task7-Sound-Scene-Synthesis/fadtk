@@ -120,6 +120,8 @@ class PANNsModel(ModelLoader):
                 % ("https://zenodo.org/records/3987831/files/Wavegram_Logmel_Cnn14_mAP%3D0.439.pth")
             )
         features_list = ["2048", "logits"]
+        current_file_dir = os.path.dirname(os.path.realpath(__file__))
+
         if self.variant == 'cnn14-16k':
             self.model = panns.Cnn14(
                 features_list=features_list,
@@ -131,6 +133,9 @@ class PANNsModel(ModelLoader):
                 fmax=8000,
                 classes_num=527,
             )
+            state_dict = torch.load(f"{current_file_dir}/panns/ckpt/Cnn14_16k_mAP=0.438.pth")
+            self.model.load_state_dict(state_dict["model"])
+
         elif self.variant == 'cnn14-32k':
             self.model = panns.Cnn14(
                 features_list=features_list,
@@ -142,6 +147,9 @@ class PANNsModel(ModelLoader):
                 fmax=14000,
                 classes_num=527,
             )
+            state_dict = torch.load(f"{current_file_dir}/panns/ckpt/Cnn14_mAP=0.431.pth")
+            self.model.load_state_dict(state_dict["model"])
+
         elif self.variant == 'wavegram-logmel':
             self.model = panns.Wavegram_Logmel_Cnn14(
                 sample_rate=32000,
@@ -152,6 +160,10 @@ class PANNsModel(ModelLoader):
                 fmax=14000,
                 classes_num=527,
             )
+            current_file_dir = os.path.dirname(os.path.realpath(__file__))
+            state_dict = torch.load(f"{current_file_dir}/panns/ckpt/Wavegram_Logmel_Cnn14_mAP=0.439.pth")
+            self.model.load_state_dict(state_dict["model"])
+
         self.model.eval()
         self.model.to(self.device)
 
