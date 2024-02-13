@@ -237,7 +237,7 @@ class EncodecEmbModel(ModelLoader):
         import torchaudio
         from encodec.utils import convert_audio
 
-        wav, sr = torchaudio.load(wav_file)
+        wav, sr = torchaudio.load(str(wav_file))
         wav = convert_audio(wav, sr, self.sr, self.model.channels)
 
         # If it's longer than 3 minutes, cut it
@@ -692,7 +692,7 @@ class WhisperModel(ModelLoader):
         model_identifier = f"whisper-{size}"
 
         super().__init__(model_identifier, model_dim, 16000, audio_len=audio_len)
-        self.huggingface_id = f"openai/whisper-large"
+        self.huggingface_id = f"openai/whisper-{size}"
         
     def load_model(self):
         from transformers import AutoFeatureExtractor
