@@ -32,10 +32,13 @@ You can listen to audio samples of per-song FAD outliers on the online demo here
 
 To use the FAD toolkit, you must first install it. This library is created and tested on Python 3.11 on Linux but should work on Python >3.9 and on Windows and macOS as well.
 
-1. Install torch https://pytorch.org/
-2. `pip install fadtk`
+1. Install torch https://pytorch.org/ (for previous versions, https://pytorch.org/get-started/previous-versions/)
+2. Install official fadtk `pip install fadtk`
+    1. (2024) to use our updated version with panns, use this command instead: `pip install git+https://github.com/jnwnlee/fadtk.git` (todo: change link)
 
 To ensure that the environment is setup correctly and everything work as intended, it is recommended to run our tests using the command `python -m fadtk.test` after installing.
+
+- if scipy causes some error, reinstall scipy: `pip uninstall scipy && pip install scipy==1.11.2`
 
 ### Optional Dependencies
 
