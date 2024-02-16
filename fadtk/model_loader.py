@@ -93,10 +93,8 @@ class PANNsModel(ModelLoader):
     IEEE/ACM Transactions on Audio, Speech, and Language Processing 28 (2020): 2880-2894.
 
     Specify the model to use (cnn14-32k, cnn14-16k, wavegram-logmel).
-    You can also specify wether to send the full provided audio or 1-s chunks of audio (cnn14-32k-1s). This was shown 
-    to have a very low impact on performances.
     """
-    def __init__(self, variant: Literal['cnn14-32k', 'cnn14-32k-1s', 'cnn14-16k', 'wavegram-logmel'], audio_len=None):
+    def __init__(self, variant: Literal['cnn14-32k', 'cnn14-16k', 'wavegram-logmel'], audio_len=None):
         super().__init__(f"panns-{variant}", 2048, 
                          sr=16000 if variant == 'cnn14-16k' else 16000, audio_len=audio_len)
         self.variant = variant
@@ -168,8 +166,6 @@ class PANNsModel(ModelLoader):
         self.model.to(self.device)
 
     def _get_embedding(self, audio: np.ndarray) -> np.ndarray:
-        if '-1s' in self.variant:
-            audio = chunk_np_array(audio, self.sr)
         audio = torch.from_numpy(audio).float().to(self.device)
         if len(audio.shape) == 1:
             audio = audio.unsqueeze(0)
