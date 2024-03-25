@@ -96,7 +96,7 @@ class PANNsModel(ModelLoader):
     """
     def __init__(self, variant: Literal['cnn14-32k', 'cnn14-16k', 'wavegram-logmel'], audio_len=None):
         super().__init__(f"panns-{variant}", 2048, 
-                         sr=16000 if variant == 'cnn14-16k' else 16000, audio_len=audio_len)
+                         sr=16000 if variant == 'cnn14-16k' else 32000, audio_len=audio_len)
         self.variant = variant
 
     def load_model(self):
