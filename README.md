@@ -67,14 +67,35 @@ fadtk.embeds -m <models...> -d <datasets...>
 *--inf* option uses FAD-inf extrapolation, anad *--indiv* calculates FAD for individual songs.
 
 #### (2024) Example 1: Computing FAD scores on Dev Set
-  
+1. Download Dev Set and unzip
 ```sh
-# Download Dev Set and unzip
 wget todo---
 tar -zxvf todo--- 
+```
+2. Before computing FAD, make sure the Dev Set directory looks like this:
+```
+path/to/dev/
+├── embeddings/
+│   ├── panns-wavegram-logmel
+│   ├── vggish
+│   ├── clap-2023
+│   └── ...
+├── stats/
+│   └── ...
+└── caption.csv
+path/to/eval/
+├── embeddings/
+│   └── ...
+├── stats/
+│   └── ...
+└── caption.csv
+```
+3. Calculate FAD score
+```sh
 # Compute FAD between the baseline and evaluation datasets on two different models
-fadtk panns-wavegram-logmel /path/to/devset /path/to/evaluation/audio
-fadtk clap-2023 /path/to/devset /path/to/evaluation/audio
+fadtk panns-wavegram-logmel /path/to/dev /path/to/evaluation/audio
+fadtk vggish /path/to/dev /path/to/evaluation/audio
+fadtk clap-2023 /path/to/dev /path/to/evaluation/audio
 ```
 
 #### Example 2: Compute individual FAD scores for each audio
