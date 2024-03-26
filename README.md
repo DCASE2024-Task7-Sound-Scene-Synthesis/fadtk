@@ -4,7 +4,7 @@ A simple and standardized library for Frechet Audio Distance (FAD) calculation. 
 
 You can listen to audio samples of per-song FAD outliers on the online demo here: https://fadtk.hydev.org/
 
-# 2024
+# DCASE 2024 Challenge Task7 Sound Scene Synthesis
 We added some extra descriptions and codes upon the official fadtk repository. <br/>
 You can search for "2024" to see the added sections in README. <br/>
 We sincerely thank to the authors for sharing the official code. <br/>
