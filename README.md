@@ -69,8 +69,10 @@ fadtk.embeds -m <models...> -d <datasets...>
 #### (2024) Example 1: Computing FAD scores on Dev Set
 1. Download Dev Set and unzip
 ```sh
-wget todo---
-tar -zxvf todo--- 
+mkdir path/to/dev
+cd path/to/dev
+wget https://zenodo.org/records/10869644/files/captions.csv https://zenodo.org/records/10869644/files/embeddings.tar.xz
+tar -xf embeddings.tar.xz
 ```
 2. Before computing FAD, make sure the Dev Set directory looks like this:
 ```
@@ -80,9 +82,7 @@ path/to/dev/
 │   ├── vggish
 │   ├── clap-2023
 │   └── ...
-├── stats/
-│   └── ...
-└── caption.csv
+└── caption.csv # not used for FAD calculation, just for your interest.
 path/to/eval/
 ├── embeddings/
 │   └── ...
