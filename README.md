@@ -4,6 +4,11 @@ A simple and standardized library for Frechet Audio Distance (FAD) calculation. 
 
 You can listen to audio samples of per-song FAD outliers on the online demo here: https://fadtk.hydev.org/
 
+# DCASE 2024 Challenge Task7 Sound Scene Synthesis
+We added some extra descriptions and codes upon the official fadtk repository. <br/>
+You can search for "2024" to see the added sections in README. <br/>
+We sincerely thank to the authors for sharing the official code. <br/>
+
 ## 0x00. Features
 
 * Easily and efficiently compute audio embeddings with various models.
@@ -20,6 +25,7 @@ You can listen to audio samples of per-song FAD outliers on the online demo here
 | [Encodec](https://github.com/facebookresearch/encodec) | `encodec-emb` | State-of-the-art deep learning based audio codec | Facebook/Meta Research |
 | [MERT](https://huggingface.co/m-a-p/MERT-v1-95M) | `MERT-v1-95M-{layer}` | Acoustic Music Understanding Model with Large-Scale Self-supervised Training | m-a-p |
 | [VGGish](https://github.com/tensorflow/models/blob/master/research/audioset/vggish/README.md) | `vggish` | Audio feature classification embedding | Google |
+| [PANNs](https://github.com/qiuqiangkong/audioset_tagging_cnn/README.md) | `panns-cnn14-{16k/32k}, panns-wavegram-logmel` | PANNs: Large-Scale Pretrained Audio Neural Networks for Audio Pattern Recognition | Kong, Qiuqiang, et al. |
 | [DAC](https://github.com/descriptinc/descript-audio-codec) | `dac-44kHz` | High-Fidelity Audio Compression with Improved RVQGAN | Descript |
 | [CDPAM](https://github.com/pranaymanocha/PerceptualAudio) | `cdpam-{acoustic/content}` | Contrastive learning-based Deep Perceptual Audio Metric | Pranay Manocha et al. |
 | [Wav2vec 2.0](https://github.com/facebookresearch/fairseq/blob/main/examples/wav2vec/README.md) | `w2v2-{base/large}` | Wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations | Facebook/Meta Research |
@@ -31,10 +37,15 @@ You can listen to audio samples of per-song FAD outliers on the online demo here
 
 To use the FAD toolkit, you must first install it. This library is created and tested on Python 3.11 on Linux but should work on Python >3.9 and on Windows and macOS as well.
 
-1. Install torch https://pytorch.org/
-2. `pip install fadtk`
+1. Install torch https://pytorch.org/ (for previous versions, https://pytorch.org/get-started/previous-versions/)
+2. (2024) to use our updated version with panns, use this command instead: <br/>
+        `pip install git+https://github.com/DCASE2024-Task7-Sound-Scene-Synthesis/fadtk.git`
+    - (original repo) Install official fadtk `pip install fadtk`
 
 To ensure that the environment is setup correctly and everything work as intended, it is recommended to run our tests using the command `python -m fadtk.test` after installing.
+
+- if scipy causes some error, reinstall scipy: `pip uninstall scipy && pip install scipy==1.11.2`
+- if charset causes some error, (re)install chardet: `pip install chardet`
 
 ### Optional Dependencies
 
@@ -49,21 +60,48 @@ Optionally, you can install dependencies that add additional embedding support. 
 # Evaluation
 fadtk <model_name> <baseline> <evaluation-set> [--inf/--indiv]
 
+
 # Compute embeddings
 fadtk.embeds -m <models...> -d <datasets...>
 ```
-#### Example 1: Computing FAD_inf scores on FMA_Pop baseline
-  
+*--inf* option uses FAD-inf extrapolation, anad *--indiv* calculates FAD for individual songs.
+
+#### (2024) Example 1: Computing FAD scores on Dev Set
+1. Download Dev Set and unzip
 ```sh
-# Compute FAD-inf between the baseline and evaluation datasets on two different models
-fadtk clap-laion-audio fma_pop /path/to/evaluation/audio --inf
-fadtk encodec-emb fma_pop /path/to/evaluation/audio --inf
+mkdir path/to/dev
+cd path/to/dev
+wget https://zenodo.org/records/10869644/files/captions.csv https://zenodo.org/records/10869644/files/embeddings.tar.xz
+tar -xf embeddings.tar.xz
+```
+2. Before computing FAD, make sure the Dev Set directory looks like this:
+```
+path/to/dev/
+├── embeddings/
+│   ├── panns-wavegram-logmel
+│   ├── vggish
+│   ├── clap-2023
+│   └── ...
+└── caption.csv # not used for FAD calculation, just for your interest.
+path/to/eval/
+├── embeddings/
+│   └── ...
+├── stats/
+│   └── ...
+└── caption.csv
+```
+3. Calculate FAD score
+```sh
+# Compute FAD between the baseline and evaluation datasets on two different models
+fadtk panns-wavegram-logmel /path/to/dev /path/to/evaluation/audio
+fadtk vggish /path/to/dev /path/to/evaluation/audio
+fadtk clap-2023 /path/to/dev /path/to/evaluation/audio
 ```
 
-#### Example 2: Compute individual FAD scores for each song
+#### Example 2: Compute individual FAD scores for each audio
 
 ```sh
-fadtk encodec-emb fma_pop /path/to/evaluation/audio --indiv scores.csv
+fadtk encodec-emb /path/to/baseline/audio /path/to/evaluation/audio --indiv scores.csv
 ```
 
 #### Example 3: Compute FAD scores with your own baseline
@@ -189,6 +227,7 @@ Please also cite the FMA (Free Music Archive) dataset if you used FMA-Pop as you
 * WavLM: [microsoft/WavLM](https://github.com/microsoft/unilm/tree/master/wavlm)
 * Whisper: [OpenAI/Whisper](https://github.com/openai/whisper)
 * VGGish in PyTorch: [harritaylor/torchvggish](https://github.com/harritaylor/torchvggish)
+* PANNs: [qiuqiangkong/audioset_tagging_cnn](https://github.com/qiuqiangkong/audioset_tagging_cnn/)
 * Free Music Archive: [mdeff/fma](https://github.com/mdeff/fma)
 * Frechet Inception Distance implementation: [mseitzer/pytorch-fid](https://github.com/mseitzer/pytorch-fid)
 * Frechet Audio Distance paper: [arxiv/1812.08466](https://arxiv.org/abs/1812.08466)

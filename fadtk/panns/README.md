@@ -1,0 +1,1 @@
+brought from [qiuqiangkong/audioset_tagging_cnn](https://github.com/qiuqiangkong/audioset_tagging_cnn/) and [AudioLDM_eval](https://github.com/haoheliu/audioldm_eval).
