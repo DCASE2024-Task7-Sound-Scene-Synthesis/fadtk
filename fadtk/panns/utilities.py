@@ -7,8 +7,7 @@ import pickle
 
 
 def create_folder(fd):
-    if not os.path.exists(fd):
-        os.makedirs(fd)
+    os.makedirs(fd, exist_ok=True)
 
 
 def get_filename(path):
