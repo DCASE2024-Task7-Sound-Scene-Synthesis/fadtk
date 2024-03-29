@@ -5,6 +5,15 @@ import torch.nn as nn
 
 
 def move_data_to_device(x, device):
+    """Move numpy ndarray to device after converting it to torch.Tensor.
+    
+    Args:
+        x: np.ndarray
+        device: torch.device
+        
+    Returns:
+        x: torch.Tensor
+    """
     if "float" in str(x.dtype):
         x = torch.Tensor(x)
     elif "int" in str(x.dtype):
