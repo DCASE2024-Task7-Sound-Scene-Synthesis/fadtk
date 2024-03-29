@@ -66,7 +66,8 @@ fadtk <model_name> <baseline> <evaluation-set> [--inf/--indiv]
 # Compute embeddings
 fadtk.embeds -m <models...> -d <datasets...>
 ```
-*--inf* option uses FAD-inf extrapolation, anad *--indiv* calculates FAD for individual songs.
+*--inf* option uses FAD-inf extrapolation, and *--indiv* calculates FAD for individual songs.
+*--force-emb-calc* forces re-calculation of embeddings.
 
 #### (2024) Example 1: Computing FAD scores on Dev Set
 1. Download Dev Set and unzip

@@ -22,11 +22,16 @@ def _cache_embedding_batch(args):
         fad.cache_embedding_file(f)
 
 
-def cache_embedding_files(files: Union[list[Path], str, Path], ml: ModelLoader, workers: int = 8, force_emb_calc=False, **kwargs):
+def cache_embedding_files(files: Union[list[Path], str, Path], ml: ModelLoader, workers: int = 8, 
+                          force_emb_calc: bool = False, **kwargs):
     """
     Get embeddings for all audio files in a directory.
 
-    :param ml_fn: A function that returns a ModelLoader instance.
+    Params:
+    - files (list[Path] | str | Path): List of audio files or a directory containing audio files.
+    - ml (ModelLoader): ModelLoader instance to use.
+    - workers (int): Number of workers to use.
+    - force_emb_calc (bool): If True, recompute embeddings even if they already exist.
     """
     if isinstance(files, (str, Path)):
         files = list(Path(files).glob('*.*'))

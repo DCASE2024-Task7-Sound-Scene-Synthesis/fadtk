@@ -28,6 +28,8 @@ def main():
     agupa.add_argument('--inf', action='store_true', help="Use FAD-inf extrapolation")
     agupa.add_argument('--indiv', action='store_true',
                        help="Calculate FAD for individual songs and store the results in the given file")
+    agupa.add_argument('--force-emb-calc', action='store_true', default=False,
+                       help="Force re-calculation of embeddings")
 
     args = agupa.parse_args()
     model = models[args.model]
@@ -38,7 +40,7 @@ def main():
     # 1. Calculate embedding files for each dataset
     for d in [baseline, eval]:
         if Path(d).is_dir():
-            cache_embedding_files(d, model, workers=args.workers)
+            cache_embedding_files(d, model, workers=args.workers, force_emb_calc=args.force_emb_calc)
 
     # 2. Calculate FAD
     fad = FrechetAudioDistance(model, audio_load_worker=args.workers, load_model=False)
