@@ -38,6 +38,7 @@ We sincerely thank to the authors for sharing the official code. <br/>
 To use the FAD toolkit, you must first install it. This library is created and tested on Python 3.11 on Linux but should work on Python >3.9 and on Windows and macOS as well.
 
 1. Install torch https://pytorch.org/ (for previous versions, https://pytorch.org/get-started/previous-versions/)
+  - Only ```pytorch~=2.1.x``` officially supported.
   - Ensure your device is GPU-compatible and install the necessary software for CUDA support.
 2. (2024) to use our updated version with panns, use this command instead: <br/>
         `pip install git+https://github.com/DCASE2024-Task7-Sound-Scene-Synthesis/fadtk.git`
