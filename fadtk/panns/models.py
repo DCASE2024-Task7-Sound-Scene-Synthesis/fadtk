@@ -8,7 +8,7 @@ import numpy as np
 
 from .pytorch_utils import (
     do_mixup,
-    interpolate,
+    upsample_temporal_dim,
     pad_framewise_output,
 )
 
@@ -3785,7 +3785,7 @@ class Cnn14_DecisionLevelMax(nn.Module):
         (clipwise_output, _) = torch.max(segmentwise_output, dim=1)
 
         # Get framewise output
-        framewise_output = interpolate(segmentwise_output, self.interpolate_ratio)
+        framewise_output = upsample_temporal_dim(segmentwise_output, self.interpolate_ratio)
         framewise_output = pad_framewise_output(framewise_output, frames_num)
 
         output_dict = {
@@ -3907,11 +3907,11 @@ class Cnn14_DecisionLevelAvg(nn.Module):
         clipwise_output = torch.mean(segmentwise_output, dim=1)
 
         # Get framewise output
-        framewise_output = interpolate(segmentwise_output, self.interpolate_ratio)
+        framewise_output = upsample_temporal_dim(segmentwise_output, self.interpolate_ratio)
         framewise_output = pad_framewise_output(framewise_output, frames_num)
 
         # Get framewise output
-        framewise_output = interpolate(segmentwise_output, self.interpolate_ratio)
+        framewise_output = upsample_temporal_dim(segmentwise_output, self.interpolate_ratio)
         framewise_output = pad_framewise_output(framewise_output, frames_num)
 
         output_dict = {
@@ -4033,7 +4033,7 @@ class Cnn14_DecisionLevelAtt(nn.Module):
         segmentwise_output = segmentwise_output.transpose(1, 2)
 
         # Get framewise output
-        framewise_output = interpolate(segmentwise_output, self.interpolate_ratio)
+        framewise_output = upsample_temporal_dim(segmentwise_output, self.interpolate_ratio)
         framewise_output = pad_framewise_output(framewise_output, frames_num)
 
         output_dict = {
