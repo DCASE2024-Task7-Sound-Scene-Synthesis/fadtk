@@ -30,8 +30,12 @@ def main():
                        help="Calculate FAD for individual songs and store the results in the given file")
     agupa.add_argument('--force-emb-calc', action='store_true', default=False,
                        help="Force re-calculation of embeddings")
+    agupa.add_argument('--audio_len', type=int, default=None, help="Length of audio clips (sec) that must be used")
 
     args = agupa.parse_args()
+    
+    if args.audio_len is not None:
+        models = {m.name: m for m in get_all_models(audio_len=args.audio_len)}
     model = models[args.model]
 
     baseline = args.baseline

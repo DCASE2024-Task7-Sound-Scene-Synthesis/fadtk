@@ -68,6 +68,7 @@ fadtk.embeds -m <models...> -d <datasets...>
 ```
 *--inf* option uses FAD-inf extrapolation, and *--indiv* calculates FAD for individual songs.
 *--force-emb-calc* forces re-calculation of embeddings.
+*--audio_len* (sec) checks if the audio match the given length.
 
 #### (2024) Example 1: Computing FAD scores on Dev Set
 1. Download Dev Set and unzip
@@ -97,8 +98,8 @@ path/to/eval/
 ```sh
 # Compute FAD between the baseline and evaluation datasets on two different models
 fadtk panns-wavegram-logmel /path/to/dev /path/to/evaluation/audio
-fadtk vggish /path/to/dev /path/to/evaluation/audio
-fadtk clap-2023 /path/to/dev /path/to/evaluation/audio
+fadtk vggish /path/to/dev /path/to/evaluation/audio --force-emb-calc
+fadtk clap-2023 /path/to/dev /path/to/evaluation/audio --audio_len 4
 ```
 
 #### Example 2: Compute individual FAD scores for each audio
