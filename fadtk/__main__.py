@@ -1,8 +1,9 @@
 import time
 from argparse import ArgumentParser
+from pathlib import Path
 
 from .fad import FrechetAudioDistance, log
-from .model_loader import *
+from .model_loader import get_all_models
 from .fad_batch import cache_embedding_files
 
 
