@@ -166,6 +166,9 @@ class PANNsModel(ModelLoader):
             state_dict = torch.load(f"{current_file_dir}/panns/ckpt/Wavegram_Logmel_Cnn14_mAP=0.439.pth")
             self.model.load_state_dict(state_dict["model"])
 
+        else:
+            raise ValueError(f"Unexpected variant of PANNs model: {self.variant}.")
+        
         self.model.eval()
         self.model.to(self.device)
 
