@@ -5,6 +5,15 @@ import torch.nn as nn
 
 
 def move_data_to_device(x, device):
+    """Move numpy ndarray to device after converting it to torch.Tensor.
+    
+    Args:
+        x: np.ndarray
+        device: torch.device
+        
+    Returns:
+        x: torch.Tensor
+    """
     if "float" in str(x.dtype):
         x = torch.Tensor(x)
     elif "int" in str(x.dtype):
@@ -113,13 +122,14 @@ def forward(model, generator, return_input=False, return_target=False):
     return output_dict
 
 
-def interpolate(x, ratio):
-    """Interpolate data in time domain. This is used to compensate the
+def upsample_temporal_dim(x, ratio):
+    """Upsample data in time domain. This is used to compensate the
     resolution reduction in downsampling of a CNN.
+    (Originally named 'interpolate' in PANNs repository.)
 
     Args:
       x: (batch_size, time_steps, classes_num)
-      ratio: int, ratio to interpolate
+      ratio: int, ratio to upsample
 
     Returns:
       upsampled: (batch_size, time_steps * ratio, classes_num)

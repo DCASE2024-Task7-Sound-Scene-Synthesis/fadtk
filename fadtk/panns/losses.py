@@ -10,3 +10,5 @@ def clip_bce(output_dict, target_dict):
 def get_loss_func(loss_type):
     if loss_type == "clip_bce":
         return clip_bce
+    else:
+        raise NotImplementedError(f"Loss type {loss_type} is not implemented.")

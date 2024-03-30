@@ -56,12 +56,11 @@ class ModelLoader(ABC):
     def load_wav(self, wav_file: Path):
         wav_data, _ = soundfile.read(wav_file, dtype='int16')
         wav_data = wav_data / 32768.0  # Convert to [-1.0, +1.0]
-        if self.audio_len is not None:
-            if wav_data.shape[0] < self.sr*4:
-                padding_size = self.sr*4 - len(wav_data)
-                wav_data = np.pad(wav_data, (0, padding_size), 'constant', constant_values=(0, 0))
-            elif wav_data.shape[0] > self.sr*4:
-                wav_data = wav_data[:self.sr*4]
+        
+        # Ensure the audio length is correct
+        if self.audio_len is not None and wav_data.shape[0] != self.audio_len * self.sr:
+            raise RuntimeError(f"Audio is too long ({wav_data.shape[0] / self.sr:.2f} seconds > {self.audio_len} seconds)."
+                                + f"\n\t- {wav_file}")
         return wav_data
 
 
@@ -167,6 +166,9 @@ class PANNsModel(ModelLoader):
             state_dict = torch.load(f"{current_file_dir}/panns/ckpt/Wavegram_Logmel_Cnn14_mAP=0.439.pth")
             self.model.load_state_dict(state_dict["model"])
 
+        else:
+            raise ValueError(f"Unexpected variant of PANNs model: {self.variant}.")
+        
         self.model.eval()
         self.model.to(self.device)
 
@@ -241,6 +243,10 @@ class EncodecEmbModel(ModelLoader):
         wav, sr = torchaudio.load(str(wav_file))
         wav = convert_audio(wav, sr, self.sr, self.model.channels)
 
+        # Ensure the audio length is correct
+        if self.audio_len is not None and wav.shape[1] != self.audio_len * self.sr:
+            raise RuntimeError(f"Audio is too long ({wav.shape[1] / self.sr:.2f} seconds > {self.audio_len} seconds)."
+                                + f"\n\t- {wav_file}")
         # If it's longer than 3 minutes, cut it
         if wav.shape[1] > 3 * 60 * self.sr:
             wav = wav[:, :3 * 60 * self.sr]
@@ -320,7 +326,14 @@ class DACModel(ModelLoader):
 
     def load_wav(self, wav_file: Path):
         from audiotools import AudioSignal
-        return AudioSignal(wav_file)
+        wav = AudioSignal(wav_file)
+        
+        # Ensure the audio length is correct
+        if self.audio_len is not None and wav.signal_duration != self.audio_len:
+            raise RuntimeError(f"Audio is too long ({wav.signal_duration} seconds > {self.audio_len} seconds)."
+                                + f"\n\t- {wav_file}")
+        
+        return wav
 
 
 class MERTModel(ModelLoader):
@@ -492,6 +505,11 @@ class CdpamModel(ModelLoader):
 
     def load_wav(self, wav_file: Path):
         x, _  = librosa.load(wav_file, sr=self.sr)
+        
+        # Ensure the audio length is correct
+        if self.audio_len is not None and x.shape[-1] != self.audio_len * self.sr:
+            raise RuntimeError(f"Audio is too long ({x.shape[-1] / self.sr:.2f} seconds > {self.audio_len} seconds)."
+                                + f"\n\t- {wav_file}")
         
         # Convert to 16 bit floating point
         x = np.round(x.astype(np.float) * 32768)
@@ -714,6 +732,17 @@ class WhisperModel(ModelLoader):
         return out
 
 def get_all_models(audio_len=None) -> list[ModelLoader]:
+    """
+    Returns a list of all available models.
+    
+    Parameters:
+    - audio_len: The length of the audio in seconds. 
+                If the audio does not match this length, it will raise an error.
+                If None(default), it will not check the length.
+    
+    Returns:
+    - A list of all available models.
+    """
     ms = [
         CLAPModel('2023', audio_len=audio_len),
         CLAPLaionModel('audio', audio_len=audio_len), CLAPLaionModel('music', audio_len=audio_len),

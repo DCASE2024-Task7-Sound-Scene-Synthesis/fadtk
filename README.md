@@ -38,6 +38,7 @@ We sincerely thank to the authors for sharing the official code. <br/>
 To use the FAD toolkit, you must first install it. This library is created and tested on Python 3.11 on Linux but should work on Python >3.9 and on Windows and macOS as well.
 
 1. Install torch https://pytorch.org/ (for previous versions, https://pytorch.org/get-started/previous-versions/)
+  - Only ```pytorch~=2.1.x``` officially supported.
   - Ensure your device is GPU-compatible and install the necessary software for CUDA support.
 2. (2024) to use our updated version with panns, use this command instead: <br/>
         `pip install git+https://github.com/DCASE2024-Task7-Sound-Scene-Synthesis/fadtk.git`
@@ -65,7 +66,9 @@ fadtk <model_name> <baseline> <evaluation-set> [--inf/--indiv]
 # Compute embeddings
 fadtk.embeds -m <models...> -d <datasets...>
 ```
-*--inf* option uses FAD-inf extrapolation, anad *--indiv* calculates FAD for individual songs.
+*--inf* option uses FAD-inf extrapolation, and *--indiv* calculates FAD for individual songs.
+*--force-emb-calc* forces re-calculation of embeddings.
+*--audio_len* (sec) checks if the audio match the given length.
 
 #### (2024) Example 1: Computing FAD scores on Dev Set
 1. Download Dev Set and unzip
@@ -95,8 +98,8 @@ path/to/eval/
 ```sh
 # Compute FAD between the baseline and evaluation datasets on two different models
 fadtk panns-wavegram-logmel /path/to/dev /path/to/evaluation/audio
-fadtk vggish /path/to/dev /path/to/evaluation/audio
-fadtk clap-2023 /path/to/dev /path/to/evaluation/audio
+fadtk vggish /path/to/dev /path/to/evaluation/audio --force-emb-calc
+fadtk clap-2023 /path/to/dev /path/to/evaluation/audio --audio_len 4
 ```
 
 #### Example 2: Compute individual FAD scores for each audio
