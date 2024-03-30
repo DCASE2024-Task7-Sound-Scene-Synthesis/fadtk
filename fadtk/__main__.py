@@ -29,7 +29,7 @@ def main():
     agupa.add_argument('--inf', action='store_true', help="Use FAD-inf extrapolation")
     agupa.add_argument('--indiv', action='store_true',
                        help="Calculate FAD for individual songs and store the results in the given file")
-    agupa.add_argument('--force-emb-calc', action='store_true', default=False,
+    agupa.add_argument('--force_emb_calc', action='store_true', default=False,
                        help="Force re-calculation of embeddings")
     agupa.add_argument('--audio_len', type=int, default=None, help="Length of audio clips (sec) that must be used")
 
