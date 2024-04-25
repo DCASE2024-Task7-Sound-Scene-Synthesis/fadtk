@@ -104,23 +104,14 @@ class PANNsModel(ModelLoader):
         os.makedirs(ckpt_dir, exist_ok=True)
         # check if each pth file is in ckpt_dir
         if not os.path.isfile(os.path.join(ckpt_dir, "Cnn14_mAP=0.431.pth")):
-            print("Download pretrained checkpoints of Panns-Cnn14-32k.")
-            os.system(
-                f"wget -P {ckpt_dir} %s"
-                % ("https://zenodo.org/record/3576403/files/Cnn14_mAP%3D0.431.pth")
-            )
+            download_file("https://zenodo.org/record/3576403/files/Cnn14_mAP%3D0.431.pth", 
+                          os.path.join(ckpt_dir, "Cnn14_mAP=0.431.pth"))
         if not os.path.isfile(os.path.join(ckpt_dir, "Cnn14_16k_mAP=0.438.pth")):
-            print("Download pretrained checkpoints of Panns-Cnn14-16k.")
-            os.system(
-                f"wget -P {ckpt_dir} %s"
-                % ("https://zenodo.org/record/3987831/files/Cnn14_16k_mAP%3D0.438.pth")
-            )
+            download_file("https://zenodo.org/record/3987831/files/Cnn14_16k_mAP%3D0.438.pth",
+                          os.path.join(ckpt_dir, "Cnn14_16k_mAP=0.438.pth"))
         if not os.path.isfile(os.path.join(ckpt_dir, "Wavegram_Logmel_Cnn14_mAP=0.439.pth")):
-            print("Download pretrained checkpoints of Panns-Wavegram-Logmel.")
-            os.system(
-                f"wget -P {ckpt_dir} %s"
-                % ("https://zenodo.org/records/3987831/files/Wavegram_Logmel_Cnn14_mAP%3D0.439.pth")
-            )
+            download_file("https://zenodo.org/records/3987831/files/Wavegram_Logmel_Cnn14_mAP%3D0.439.pth",
+                          os.path.join(ckpt_dir, "Wavegram_Logmel_Cnn14_mAP=0.439.pth"))
         features_list = ["2048", "logits"]
         current_file_dir = os.path.dirname(os.path.realpath(__file__))
 
