@@ -192,6 +192,18 @@ The method we used to create GPT4 one-shot prompts for generating the refined Mu
 
 ## 0x06. Citation, Acknowledgments and Licenses
 
+(2024) If you are participating in DCASE T7 challenge or find this repository useful in evaluating generated environmental audio, please cite our paper. 
+
+```latex
+@article{fad_embeddings,
+    author = {Tailleur, Modan and Lee, Junwon and Lagrange, Mathieu and Choi, Keunwoo and Heller, Laurie M. and Imoto, Keisuke and Okamoto, Yuki},
+    title = {Correlation of Fréchet Audio Distance With Human Perception of Environmental Audio Is Embedding Dependant},
+    journal = {arXiv:2403.17508},
+    url = {https://arxiv.org/abs/2403.17508},
+    year = {2024}
+}
+```
+
 The code in this toolkit is licensed under the [MIT License](./LICENSE). Please cite our work if this repository helped you in your project. 
 
 ```latex
