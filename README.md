@@ -195,12 +195,19 @@ The method we used to create GPT4 one-shot prompts for generating the refined Mu
 (2024) If you are participating in DCASE T7 challenge or find this repository useful in evaluating generated environmental audio, please cite our paper. 
 
 ```latex
-@article{fad_embeddings,
-    author = {Tailleur, Modan and Lee, Junwon and Lagrange, Mathieu and Choi, Keunwoo and Heller, Laurie M. and Imoto, Keisuke and Okamoto, Yuki},
-    title = {Correlation of Fréchet Audio Distance With Human Perception of Environmental Audio Is Embedding Dependant},
-    journal = {arXiv:2403.17508},
-    url = {https://arxiv.org/abs/2403.17508},
-    year = {2024}
+@inproceedings{fad_embeddings,
+  title={Correlation of Fr{\'e}chet Audio Distance With Human Perception of Environmental Audio Is Embedding Dependent},
+  author={Tailleur, Modan and Lee, Junwon and Lagrange, Mathieu and Choi, Keunwoo and Heller, Laurie M and Imoto, Keisuke and Okamoto, Yuki},
+  booktitle={EUSIPCO},
+  year={2024}
+}
+```
+
+```latex
+@inproceedings{lee2024challenge,
+  title={Challenge on Sound Scene Synthesis: Evaluating Text-to-Audio Generation},
+  author={Lee, Junwon and Tailleur, Modan and Heller, Laurie M and Choi, Keunwoo and Lagrange, Mathieu and McFee, Brian and Imoto, Keisuke and Okamoto, Yuki},
+  booktitle={Audio Imagination: NeurIPS 2024 Workshop AI-Driven Speech, Music, and Sound Generation}
 }
 ```
 
