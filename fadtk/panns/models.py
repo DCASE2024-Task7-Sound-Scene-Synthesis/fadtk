@@ -2918,6 +2918,12 @@ class Wavegram_Logmel_Cnn14(nn.Module):
 
         x = self.conv_block1(x, pool_size=(2, 2), pool_type="avg")
 
+        # Drop the last frame if different
+        if x.shape[-2] != a1.shape[-2]:
+            min_length = min(x.shape[-2], a1.shape[-2])
+            x = x[:, :, :min_length, :]
+            a1 = a1[:, :, :min_length, :]
+
         # Concatenate Wavegram and Log mel spectrogram along the channel dimension
         x = torch.cat((x, a1), dim=1)
 
